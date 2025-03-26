@@ -44,99 +44,84 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                VStack(spacing: 12) {
-                    HStack {
-                        Text("Folder")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+            ZStack(alignment: .bottomTrailing) {
+                VStack(spacing: 16) {
+                    Picker("Folder", selection: $selectedFolder) {
+                        ForEach(allFolders, id: \.self) { folder in
+                            Text(folder).tag(folder)
+                        }
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                    .padding([.horizontal, .top])
+
+                    if filteredNotes.isEmpty {
                         Spacer()
-                        Picker("Folder", selection: $selectedFolder) {
-                            ForEach(allFolders, id: \.self) { folder in
-                                Text(folder).tag(folder)
+                        VStack(spacing: 8) {
+                            Text("No notes yet")
+                                .font(.title2).foregroundColor(.gray)
+                            Text("Tap + to create your first note.")
+                                .font(.body).foregroundColor(.gray.opacity(0.7))
+                        }
+                        Spacer()
+                    } else {
+                        List {
+                            if !pinnedNotes.isEmpty {
+                                Section(header: Text("📌 Pinned")) {
+                                    noteListView(for: pinnedNotes)
+                                }
+                            }
+                            if !unpinnedNotes.isEmpty {
+                                Section(header: Text("Others")) {
+                                    noteListView(for: unpinnedNotes)
+                                }
                             }
                         }
-                        .pickerStyle(MenuPickerStyle())
+                        .listStyle(.plain)
                     }
-                    .padding(.horizontal)
-
-                    List {
-                        if pinnedNotes.isEmpty && unpinnedNotes.isEmpty {
-                            VStack(spacing: 12) {
-                                Text("No notes yet")
-                                    .font(.title3)
-                                    .foregroundColor(.gray)
-                                Text("Tap + to create your first note.")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.vertical, 100)
-                            .listRowBackground(Color.clear)
-                        }
-
-                        if !pinnedNotes.isEmpty {
-                            Section(header: Text("📌 Pinned").font(.subheadline).foregroundColor(.gray)) {
-                                noteListView(for: pinnedNotes)
-                            }
-                        }
-                        if !unpinnedNotes.isEmpty {
-                            Section(header: Text("Others").font(.subheadline).foregroundColor(.gray)) {
-                                noteListView(for: unpinnedNotes)
-                            }
-                        }
-                    }
-                    .listStyle(.plain)
-                    .searchable(text: $searchText, prompt: "Search notes")
                 }
+                .navigationTitle("My Notes")
+                .navigationBarTitleDisplayMode(.inline)
+                .sheet(isPresented: $showingAddNote) {
+                    AddNoteView(store: store)
+                }
+                .searchable(text: $searchText, prompt: "Search notes")
+                .navigationDestination(isPresented: Binding(
+                    get: { selectedNote != nil },
+                    set: { if !$0 { selectedNote = nil } }
+                )) {
+                    if let note = selectedNote,
+                       let index = store.notes.firstIndex(where: { $0.id == note.id }) {
+                        let binding = $store.notes[index]
+                        NoteDetailView(note: binding, store: store)
+                    }
+                }
+                .background(Color(.systemGray6).ignoresSafeArea())
 
-                // Floating Add Button
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            showingAddNote = true
-                        }) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.blue)
-                                .clipShape(Circle())
-                                .shadow(radius: 4)
-                        }
+                Button(action: {
+                    withAnimation(.spring()) {
+                        showingAddNote = true
+                    }
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
                         .padding()
-                    }
+                        .background(Color.blue)
+                        .clipShape(Circle())
+                        .shadow(radius: 4)
                 }
+                .padding()
             }
-            .navigationTitle("My Notes")
-            .navigationBarTitleDisplayMode(.inline)
-            .sheet(isPresented: $showingAddNote) {
-                AddNoteView(store: store)
-            }
-            .navigationDestination(isPresented: Binding(
-                get: { selectedNote != nil },
-                set: { if !$0 { selectedNote = nil } }
-            )) {
-                if let note = selectedNote,
-                   let index = store.notes.firstIndex(where: { $0.id == note.id }) {
-                    let binding = $store.notes[index]
-                    NoteDetailView(note: binding, store: store)
-                }
-
-
-            }
-            .accentColor(.blue)
         }
-        .background(Color(.systemGray6).ignoresSafeArea())
     }
 
     @ViewBuilder
     func noteListView(for notes: [Note]) -> some View {
-        ForEach(notes, id: \.id) { note in
+        ForEach(notes) { note in
             Button(action: {
-                selectedNote = note
+                withAnimation(.easeInOut) {
+                    selectedNote = note
+                }
             }) {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
@@ -151,32 +136,35 @@ struct ContentView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Text(note.content)
-                        .lineLimit(2)
+                        .lineLimit(1)
+                        .font(.subheadline)
                         .foregroundColor(.gray)
                 }
-                .padding()
+                .padding(8)
                 .background(Color.white)
                 .cornerRadius(12)
-                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
             }
             .buttonStyle(.plain)
-            .listRowInsets(EdgeInsets())
-            .padding(.vertical, 4)
             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                 Button {
                     if let index = store.notes.firstIndex(where: { $0.id == note.id }) {
-                        store.notes[index].isPinned.toggle()
-                        store.saveNotes()
+                        withAnimation {
+                            store.notes[index].isPinned.toggle()
+                            store.saveNotes()
+                        }
                     }
                 } label: {
                     Label(note.isPinned ? "Unpin" : "Pin", systemImage: note.isPinned ? "pin.slash" : "pin")
                 }
-                .tint(note.isPinned ? .gray : Color.blue.opacity(0.7))
+                .tint(note.isPinned ? .gray : .blue)
 
                 Button(role: .destructive) {
                     if let index = store.notes.firstIndex(where: { $0.id == note.id }) {
-                        store.notes.remove(at: index)
-                        store.saveNotes()
+                        withAnimation {
+                            store.notes.remove(at: index)
+                            store.saveNotes()
+                        }
                     }
                 } label: {
                     Label("Delete", systemImage: "trash")

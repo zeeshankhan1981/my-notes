@@ -1,87 +1,138 @@
-// AddNoteView.swift
 import SwiftUI
-import PhotosUI
+
+struct iOSCheckboxToggleStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Button(action: {
+            withAnimation {
+                configuration.isOn.toggle()
+            }
+        }) {
+            HStack {
+                Image(systemName: configuration.isOn ? "checkmark.square.fill" : "square")
+                    .foregroundColor(configuration.isOn ? .blue : .gray)
+                    .font(.system(size: 20))
+                configuration.label
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
 
 struct AddNoteView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     @ObservedObject var store: NotesStore
 
     @State private var title = ""
     @State private var content = ""
-    @State private var folder = "General"
-    @State private var tagsText = ""
-    @State private var checklist: [ChecklistItem] = []
+    @State private var folder = "Others"
+    @State private var checklistItems: [ChecklistItem] = []
     @State private var newChecklistItem = ""
-    @State private var selectedImageData: Data? = nil
-    @State private var selectedPhoto: PhotosPickerItem? = nil
+    @State private var image: UIImage? = nil
+    @State private var showingImagePicker = false
 
     var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("Note")) {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
                     TextField("Title", text: $title)
+                        .font(.title)
+                        .padding()
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(10)
+
                     TextEditor(text: $content)
-                        .frame(height: 100)
-                }
+                        .frame(height: 120)
+                        .padding()
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(10)
 
-                Section(header: Text("Folder")) {
-                    TextField("Folder Name", text: $folder)
-                }
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Checklist")
+                            .font(.headline)
 
-                Section(header: Text("Tags (comma-separated)")) {
-                    TextField("tag1, tag2", text: $tagsText)
-                }
+                        ForEach($checklistItems) { $item in
+                            Toggle(isOn: $item.isChecked) {
+                                Text(item.text)
+                                    .strikethrough(item.isChecked, color: .gray)
+                                    .foregroundColor(item.isChecked ? .gray : .primary)
+                            }
+                            .toggleStyle(iOSCheckboxToggleStyle())
+                        }
 
-                Section(header: Text("Checklist")) {
-                    ForEach(checklist) { item in
                         HStack {
-                            Image(systemName: item.isChecked ? "checkmark.square" : "square")
-                                .onTapGesture {
-                                    if let index = checklist.firstIndex(where: { $0.id == item.id }) {
-                                        checklist[index].isChecked.toggle()
-                                    }
+                            TextField("Add checklist item", text: $newChecklistItem)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+
+                            Button(action: {
+                                if !newChecklistItem.isEmpty {
+                                    checklistItems.append(ChecklistItem(text: newChecklistItem, isChecked: false))
+                                    newChecklistItem = ""
                                 }
-                            Text(item.text)
-                        }
-                    }
-                    HStack {
-                        TextField("New item", text: $newChecklistItem)
-                        Button("Add") {
-                            if !newChecklistItem.isEmpty {
-                                checklist.append(ChecklistItem(text: newChecklistItem))
-                                newChecklistItem = ""
+                            }) {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundColor(.blue)
+                                    .font(.title2)
                             }
+                            .disabled(newChecklistItem.isEmpty)
                         }
+                        .padding(.top, 4)
+                    }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Folder")
+                            .font(.headline)
+                        TextField("Folder name", text: $folder)
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(10)
+                    }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Image")
+                            .font(.headline)
+                        if let image = image {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFit()
+                                .cornerRadius(12)
+                                .shadow(radius: 4)
+                        }
+                        Button("Select Image") {
+                            showingImagePicker = true
+                        }
+                        .buttonStyle(.borderedProminent)
                     }
                 }
-
-                Section(header: Text("Image")) {
-                    if let imageData = selectedImageData, let uiImage = UIImage(data: imageData) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: 150)
+                .padding()
+            }
+            .navigationTitle("Add Note")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
                     }
-                    PhotosPicker("Select Image", selection: $selectedPhoto, matching: .images)
-                        .onChange(of: selectedPhoto) {
-                            Task {
-                                if let data = try? await selectedPhoto?.loadTransferable(type: Data.self) {
-                                    selectedImageData = data
-                                }
-                            }
-                        }
-
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        let newNote = Note(
+                            title: title,
+                            content: content,
+                            date: Date(),
+                            isPinned: false,
+                            folder: folder,
+                            checklist: checklistItems,
+                            imageData: image?.pngData()
+                        )
+                        store.notes.append(newNote)
+                        store.saveNotes()
+                        dismiss()
+                    }
+                    .disabled(title.isEmpty && content.isEmpty)
                 }
             }
-            .navigationTitle("New Note")
-            .navigationBarItems(leading: Button("Cancel") {
-                presentationMode.wrappedValue.dismiss()
-            }, trailing: Button("Save") {
-                let tags = tagsText.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                let newNote = Note(title: title, content: content, date: Date(), folder: folder, tags: tags, checklist: checklist, imageData: selectedImageData)
-                store.add(note: newNote)
-                presentationMode.wrappedValue.dismiss()
-            }.disabled(title.isEmpty || content.isEmpty))
+            .sheet(isPresented: $showingImagePicker) {
+                ImagePicker(selectedImage: $image)
+            }
         }
     }
 }

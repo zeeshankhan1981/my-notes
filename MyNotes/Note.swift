@@ -1,11 +1,8 @@
 // Note.swift
 import Foundation
 
-struct ChecklistItem: Identifiable, Codable {
-    var id = UUID()
-    var text: String
-    var isChecked: Bool = false
-}
+
+
 
 struct Note: Identifiable, Codable {
     var id = UUID()

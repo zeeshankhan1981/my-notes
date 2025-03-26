@@ -4,64 +4,127 @@ struct NoteDetailView: View {
     @Binding var note: Note
     @ObservedObject var store: NotesStore
 
+    @State private var isEditing = false
+    @FocusState private var isFocused: Bool
+    @State private var newChecklistItem = ""
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text(note.title)
-                    .font(.largeTitle).bold()
+                if isEditing {
+                    TextField("Title", text: $note.title)
+                        .font(.title)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(10)
+                        .focused($isFocused)
+                } else {
+                    Text(note.title)
+                        .font(.title.bold())
+                }
 
-                Text(note.date, style: .date)
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
+                if isEditing {
+                    TextEditor(text: $note.content)
+                        .frame(height: 150)
+                        .padding(8)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(10)
+                        .focused($isFocused)
+                } else {
+                    Text(note.content)
+                        .font(.body)
+                }
 
                 Divider()
 
-                Text(note.content)
-                    .font(.body)
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Checklist")
+                            .font(.headline)
+                        Spacer()
+                    }
 
-                if !note.checklist.isEmpty {
-                    Text("Checklist")
-                        .font(.headline)
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach($note.checklist) { $item in
-                            HStack {
-                                Button(action: {
-                                    item.isChecked.toggle()
-                                    store.saveNotes()
-                                }) {
-                                    Image(systemName: item.isChecked ? "checkmark.square.fill" : "square")
-                                        .foregroundColor(item.isChecked ? .blue : .gray)
+                    ForEach($note.checklist) { $item in
+                        HStack {
+                            if isEditing {
+                                Toggle(isOn: $item.isChecked) {
+                                    TextField("Checklist item", text: $item.text)
                                 }
-
+                                .toggleStyle(SwitchToggleStyle())
+                            } else {
+                                Image(systemName: item.isChecked ? "checkmark.square" : "square")
+                                    .foregroundColor(item.isChecked ? .blue : .gray)
                                 Text(item.text)
                                     .strikethrough(item.isChecked)
-                                    .foregroundColor(item.isChecked ? .gray : .primary)
-
-                                Spacer()
+                                    .foregroundColor(.primary)
                             }
-                            .padding(8)
-                            .background(Color(UIColor.secondarySystemBackground))
-                            .cornerRadius(10)
                         }
+                    }
+
+                    if isEditing {
+                        HStack {
+                            TextField("Add checklist item", text: $newChecklistItem)
+                            Button(action: {
+                                guard !newChecklistItem.isEmpty else { return }
+                                withAnimation {
+                                    note.checklist.append(ChecklistItem(text: newChecklistItem, isChecked: false))
+                                    newChecklistItem = ""
+                                }
+                            }) {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                        .padding(8)
+                        .background(Color(.systemGray5))
+                        .cornerRadius(8)
                     }
                 }
 
-                if let data = note.imageData, let uiImage = UIImage(data: data) {
-                    Image(uiImage: uiImage)
+                if let imageData = note.imageData,
+                   let image = UIImage(data: imageData) {
+                    Image(uiImage: image)
                         .resizable()
-                        .aspectRatio(contentMode: .fit)
+                        .scaledToFit()
                         .cornerRadius(12)
-                        .shadow(radius: 5)
-                        .padding(.top, 16)
+                        .shadow(radius: 4)
+                }
+
+                if isEditing {
+                    HStack {
+                        Text("Folder:")
+                        TextField("Enter folder", text: $note.folder)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                } else {
+                    HStack(spacing: 4) {
+                        Image(systemName: "folder")
+                        Text(note.folder)
+                            .foregroundColor(.blue)
+                            .font(.subheadline)
+                    }
+                    .padding(.top, 8)
                 }
 
                 Spacer()
             }
             .padding()
         }
-        .background(Color(UIColor.systemGroupedBackground))
         .navigationTitle("Note")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button(isEditing ? "Save" : "Edit") {
+                    withAnimation {
+                        isEditing.toggle()
+                        if !isEditing {
+                            store.saveNotes()
+                        } else {
+                            isFocused = true
+                        }
+                    }
+                }
+            }
+        }
     }
 }
