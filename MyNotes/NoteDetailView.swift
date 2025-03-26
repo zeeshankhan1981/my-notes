@@ -11,6 +11,8 @@ struct NoteDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                
+                // Title
                 if isEditing {
                     TextField("Title", text: $note.title)
                         .font(.title)
@@ -23,6 +25,7 @@ struct NoteDetailView: View {
                         .font(.title.bold())
                 }
 
+                // Content
                 if isEditing {
                     TextEditor(text: $note.content)
                         .frame(height: 150)
@@ -37,50 +40,41 @@ struct NoteDetailView: View {
 
                 Divider()
 
+                // Checklist
                 VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Checklist")
-                            .font(.headline)
-                        Spacer()
-                    }
+                    Text("Checklist")
+                        .font(.headline)
 
                     ForEach($note.checklist) { $item in
-                        HStack {
-                            if isEditing {
-                                Toggle(isOn: $item.isChecked) {
-                                    TextField("Checklist item", text: $item.text)
-                                }
-                                .toggleStyle(SwitchToggleStyle())
-                            } else {
-                                Image(systemName: item.isChecked ? "checkmark.square" : "square")
-                                    .foregroundColor(item.isChecked ? .blue : .gray)
-                                Text(item.text)
-                                    .strikethrough(item.isChecked)
-                                    .foregroundColor(.primary)
-                            }
+                        Toggle(isOn: $item.isChecked) {
+                            TextField("Checklist item", text: $item.text)
+                                .textFieldStyle(.plain)
+                                .strikethrough(item.isChecked)
+                                .foregroundColor(.primary)
                         }
+                        .toggleStyle(SwitchToggleStyle())
                     }
 
-                    if isEditing {
-                        HStack {
-                            TextField("Add checklist item", text: $newChecklistItem)
-                            Button(action: {
-                                guard !newChecklistItem.isEmpty else { return }
-                                withAnimation {
-                                    note.checklist.append(ChecklistItem(text: newChecklistItem, isChecked: false))
-                                    newChecklistItem = ""
-                                }
-                            }) {
-                                Image(systemName: "plus.circle.fill")
-                                    .foregroundColor(.blue)
+                    // Add new checklist item
+                    HStack {
+                        TextField("Add checklist item", text: $newChecklistItem)
+                        Button(action: {
+                            guard !newChecklistItem.isEmpty else { return }
+                            withAnimation {
+                                note.checklist.append(ChecklistItem(text: newChecklistItem, isChecked: false))
+                                newChecklistItem = ""
                             }
+                        }) {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundColor(.blue)
                         }
-                        .padding(8)
-                        .background(Color(.systemGray5))
-                        .cornerRadius(8)
                     }
+                    .padding(8)
+                    .background(Color(.systemGray5))
+                    .cornerRadius(8)
                 }
 
+                // Image
                 if let imageData = note.imageData,
                    let image = UIImage(data: imageData) {
                     Image(uiImage: image)
@@ -90,6 +84,7 @@ struct NoteDetailView: View {
                         .shadow(radius: 4)
                 }
 
+                // Folder
                 if isEditing {
                     HStack {
                         Text("Folder:")

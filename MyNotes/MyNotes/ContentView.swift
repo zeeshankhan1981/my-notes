@@ -1,4 +1,3 @@
-// ContentView.swift
 import SwiftUI
 
 struct ContentView: View {
@@ -46,13 +45,40 @@ struct ContentView: View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
                 VStack(spacing: 16) {
-                    Picker("Folder", selection: $selectedFolder) {
-                        ForEach(allFolders, id: \.self) { folder in
-                            Text(folder).tag(folder)
+
+                    // 🔹 New Folder Selector Style
+                    HStack {
+                        Text("Filter by:")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+
+                        Menu {
+                            ForEach(allFolders, id: \.self) { folder in
+                                Button {
+                                    selectedFolder = folder
+                                } label: {
+                                    Label(folder, systemImage: selectedFolder == folder ? "checkmark" : "")
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text(selectedFolder)
+                                    .font(.subheadline)
+                                    .foregroundColor(.blue)
+                                Image(systemName: "chevron.down")
+                                    .font(.caption)
+                                    .foregroundColor(.blue)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color(.systemGray5))
+                            .clipShape(Capsule())
                         }
+
+                        Spacer()
                     }
-                    .pickerStyle(MenuPickerStyle())
-                    .padding([.horizontal, .top])
+                    .padding(.horizontal)
+                    .padding(.top, 4)
 
                     if filteredNotes.isEmpty {
                         Spacer()
