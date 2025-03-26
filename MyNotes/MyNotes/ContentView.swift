@@ -119,9 +119,13 @@ struct ContentView: View {
                 get: { selectedNote != nil },
                 set: { if !$0 { selectedNote = nil } }
             )) {
-                if let note = selectedNote {
-                    NoteDetailView(note: note, store: store)
+                if let note = selectedNote,
+                   let index = store.notes.firstIndex(where: { $0.id == note.id }) {
+                    let binding = $store.notes[index]
+                    NoteDetailView(note: binding, store: store)
                 }
+
+
             }
             .accentColor(.blue)
         }
