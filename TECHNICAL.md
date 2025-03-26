@@ -11,7 +11,7 @@ The core data model is defined in `Note.swift` and consists of:
   - `content`: String (rich text)
   - `date`: Date (creation timestamp)
   - `isPinned`: Bool
-  - `folder`: String (default "General")
+  - `folder`: String (default "Others")
   - `tags`: [String]
   - `checklist`: [ChecklistItem]
   - `imageData`: Data? (optional image attachment)
@@ -32,10 +32,21 @@ The `NotesStore` class handles:
 The application follows a standard SwiftUI architecture:
 
 - `ContentView`: Main application view showing list of notes
-- `AddNoteView`: Interface for creating new notes
+- `AddNoteView`: Interface for creating new notes with:
+  - Modern iOS-style checkbox implementation
+  - Improved text field styling
+  - Enhanced note editing interface
+  - Better visual hierarchy
 - `NoteDetailView`: Detailed view for viewing and editing notes
 
 ## Implementation Details
+
+### UI Components
+
+- Custom `iOSCheckboxToggleStyle` for native iOS checkbox appearance
+- Improved text field styling with proper padding and background
+- Enhanced note editing interface with better spacing and organization
+- Proper image display with aspect ratio and shadow effects
 
 ### State Management
 
@@ -61,7 +72,7 @@ The application implements:
 ## Performance Considerations
 
 - Efficient data loading through lazy loading
-- Optimized image handling
+- Optimized image handling with proper aspect ratio
 - Efficient text rendering
 - Memory management for large note collections
 

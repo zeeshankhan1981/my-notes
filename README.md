@@ -6,12 +6,12 @@ A modern, feature-rich notes application built with Swift for iOS/macOS.
 
 - Create and manage notes with rich text formatting
 - Add images to notes
-- Organize notes into folders
+- Organize notes into folders (default "Others")
 - Add tags for easy categorization
-- Checklist support within notes
+- Enhanced checklist support with iOS-style checkboxes
+- Modern, intuitive user interface with improved styling
 - Pin important notes for quick access
 - Timestamps for note creation
-- Modern, intuitive user interface
 
 ## Project Structure
 
@@ -32,6 +32,14 @@ A modern, feature-rich notes application built with Swift for iOS/macOS.
 1. Clone the repository
 2. Open `MyNotes.xcodeproj` in Xcode
 3. Build and run the project
+
+## UI Improvements
+
+- Modern iOS-style checkboxes with animations
+- Improved text field styling with proper padding and background
+- Enhanced note editing interface with better spacing and organization
+- Improved image display with proper aspect ratio and shadow effects
+- Better visual hierarchy with proper font sizes and weights
 
 ## Contributing
 
