@@ -5,76 +5,18 @@ struct NoteDetailView: View {
     @ObservedObject var store: NotesStore
 
     @State private var isEditing = false
-    @FocusState private var isFocused: Bool
-    @State private var newChecklistItem = ""
+    @FocusState private var focusedChecklistIndex: Int?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                
-                // Title
-                if isEditing {
-                    TextField("Title", text: $note.title)
-                        .font(.title)
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(10)
-                        .focused($isFocused)
-                } else {
-                    Text(note.title)
-                        .font(.title.bold())
-                }
 
-                // Content
-                if isEditing {
-                    TextEditor(text: $note.content)
-                        .frame(height: 150)
-                        .padding(8)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(10)
-                        .focused($isFocused)
-                } else {
-                    Text(note.content)
-                        .font(.body)
-                }
+                NoteHeaderView(note: $note, isEditing: $isEditing)
 
                 Divider()
 
-                // Checklist
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Checklist")
-                        .font(.headline)
+                ChecklistView(note: $note, store: store, isEditing: $isEditing, focusedChecklistIndex: $focusedChecklistIndex)
 
-                    ForEach($note.checklist) { $item in
-                        Toggle(isOn: $item.isChecked) {
-                            TextField("Checklist item", text: $item.text)
-                                .textFieldStyle(.plain)
-                                .strikethrough(item.isChecked)
-                                .foregroundColor(.primary)
-                        }
-                        .toggleStyle(SwitchToggleStyle())
-                    }
-
-                    // Add new checklist item
-                    HStack {
-                        TextField("Add checklist item", text: $newChecklistItem)
-                        Button(action: {
-                            guard !newChecklistItem.isEmpty else { return }
-                            withAnimation {
-                                note.checklist.append(ChecklistItem(text: newChecklistItem, isChecked: false))
-                                newChecklistItem = ""
-                            }
-                        }) {
-                            Image(systemName: "plus.circle.fill")
-                                .foregroundColor(.blue)
-                        }
-                    }
-                    .padding(8)
-                    .background(Color(.systemGray5))
-                    .cornerRadius(8)
-                }
-
-                // Image
                 if let imageData = note.imageData,
                    let image = UIImage(data: imageData) {
                     Image(uiImage: image)
@@ -84,7 +26,6 @@ struct NoteDetailView: View {
                         .shadow(radius: 4)
                 }
 
-                // Folder
                 if isEditing {
                     HStack {
                         Text("Folder:")
@@ -100,8 +41,6 @@ struct NoteDetailView: View {
                     }
                     .padding(.top, 8)
                 }
-
-                Spacer()
             }
             .padding()
         }
@@ -114,12 +53,80 @@ struct NoteDetailView: View {
                         isEditing.toggle()
                         if !isEditing {
                             store.saveNotes()
-                        } else {
-                            isFocused = true
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+struct NoteHeaderView: View {
+    @Binding var note: Note
+    @Binding var isEditing: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            TextField("Title", text: $note.title)
+                .font(.title)
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
+
+            TextEditor(text: $note.content)
+                .frame(height: 150)
+                .padding(8)
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
+        }
+    }
+}
+
+struct ChecklistView: View {
+    @Binding var note: Note
+    var store: NotesStore
+    @Binding var isEditing: Bool
+    @FocusState.Binding var focusedChecklistIndex: Int?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Checklist")
+                .font(.headline)
+
+            ForEach(Array(note.checklist.indices), id: \ .self) { index in
+                HStack {
+                    Button(action: {
+                        note.checklist[index].isChecked.toggle()
+                        store.saveNotes()
+                    }) {
+                        Image(systemName: note.checklist[index].isChecked ? "checkmark.circle.fill" : "circle")
+                            .foregroundColor(note.checklist[index].isChecked ? .blue : .gray)
+                    }
+
+                    TextField("", text: $note.checklist[index].text)
+                        .focused($focusedChecklistIndex, equals: index)
+                        .textFieldStyle(.plain)
+                        .onSubmit {
+                            if !note.checklist[index].text.trimmingCharacters(in: .whitespaces).isEmpty {
+                                let newItem = ChecklistItem(text: "", isChecked: false)
+                                note.checklist.insert(newItem, at: index + 1)
+                                focusedChecklistIndex = index + 1
+                            }
+                        }
+                }
+                .padding(.vertical, 4)
+            }
+
+            Button(action: {
+                note.checklist.append(ChecklistItem(text: "", isChecked: false))
+                focusedChecklistIndex = note.checklist.count - 1
+            }) {
+                HStack {
+                    Image(systemName: "plus.circle")
+                    Text("New Checklist Item")
+                }
+            }
+            .padding(.top, 4)
         }
     }
 }
