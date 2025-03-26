@@ -123,16 +123,6 @@ struct ContentView: View {
                     NoteDetailView(note: note, store: store)
                 }
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingAddNote = true
-                    }) {
-                        Image(systemName: "plus")
-                            .foregroundColor(.blue)
-                    }
-                }
-            }
             .accentColor(.blue)
         }
         .background(Color(.systemGray6).ignoresSafeArea())
