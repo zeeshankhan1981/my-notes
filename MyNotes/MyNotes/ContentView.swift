@@ -36,24 +36,19 @@ struct ContentView: View {
         filteredNotes.filter { !$0.isPinned }
     }
 
-    var allFolders: [String] {
-        let folders = Set(store.notes.map { $0.folder })
-        return ["All"] + folders.sorted()
-    }
-
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
                 VStack(spacing: 16) {
 
-                    // 🔹 New Folder Selector Style
+                    // 🔹 Folder Selector
                     HStack {
                         Text("Filter by:")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
 
                         Menu {
-                            ForEach(allFolders, id: \.self) { folder in
+                            ForEach(store.allFolders, id: \.self) { folder in
                                 Button {
                                     selectedFolder = folder
                                 } label: {
@@ -168,7 +163,6 @@ struct ContentView: View {
                 }
                 .padding(8)
                 .background(Color.white)
-                
             }
             .buttonStyle(.plain)
             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
