@@ -1,6 +1,6 @@
 # My Notes
 
-A modern note-taking app inspired by Bear's beautiful design and functionality.
+A modern note-taking app with a clean, minimalist interface.
 
 ## Features
 
@@ -14,7 +14,7 @@ A modern note-taking app inspired by Bear's beautiful design and functionality.
 
 ## Design
 
-The app features a clean, minimalist interface inspired by Bear, with:
+The app features a clean, minimalist interface with:
 
 - Card-based layout for better organization
 - Modern iOS-style checkboxes

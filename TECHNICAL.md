@@ -52,7 +52,7 @@ MyNotes/
 ## Implementation Details
 
 ### AddNoteView
-- Implemented Bear-inspired card-based layout
+- Implemented card-based layout
 - Added tag management with colored indicators
 - Enhanced checklist UI with iOS-style checkboxes
 - Improved text field styling with proper padding
@@ -60,7 +60,7 @@ MyNotes/
 - Implemented smooth animations for interactions
 
 ### NoteDetailView
-- Redesigned with Bear's aesthetic
+- Redesigned with a modern aesthetic
 - Added tag visualization with color indicators
 - Improved checklist display with proper spacing
 - Enhanced metadata display (folder, tags, date)
