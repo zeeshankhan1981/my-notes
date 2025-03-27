@@ -42,103 +42,19 @@ struct ContentView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack(alignment: .bottomTrailing) {
-                VStack(spacing: 16) {
+        MainView()
+            .environmentObject(store)
+    }
 
-                    // 🔹 New Folder Selector Style
-                    HStack {
-                        Text("Filter by:")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-
-                        Menu {
-                            ForEach(allFolders, id: \.self) { folder in
-                                Button {
-                                    selectedFolder = folder
-                                } label: {
-                                    Label(folder, systemImage: selectedFolder == folder ? "checkmark" : "")
-                                }
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Text(selectedFolder)
-                                    .font(.subheadline)
-                                    .foregroundColor(.blue)
-                                Image(systemName: "chevron.down")
-                                    .font(.caption)
-                                    .foregroundColor(.blue)
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color(.systemGray5))
-                            .clipShape(Capsule())
-                        }
-
-                        Spacer()
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 4)
-
-                    if filteredNotes.isEmpty {
-                        Spacer()
-                        VStack(spacing: 8) {
-                            Text("No notes yet")
-                                .font(.title2).foregroundColor(.gray)
-                            Text("Tap + to create your first note.")
-                                .font(.body).foregroundColor(.gray.opacity(0.7))
-                        }
-                        Spacer()
-                    } else {
-                        List {
-                            if !pinnedNotes.isEmpty {
-                                Section(header: Text("📌 Pinned")) {
-                                    noteListView(for: pinnedNotes)
-                                }
-                            }
-                            if !unpinnedNotes.isEmpty {
-                                Section(header: Text("Others")) {
-                                    noteListView(for: unpinnedNotes)
-                                }
-                            }
-                        }
-                        .listStyle(.plain)
-                    }
-                }
-                .navigationTitle("My Notes")
-                .navigationBarTitleDisplayMode(.inline)
-                .sheet(isPresented: $showingAddNote) {
-                    AddNoteView(store: store)
-                }
-                .searchable(text: $searchText, prompt: "Search notes")
-                .navigationDestination(isPresented: Binding(
-                    get: { selectedNote != nil },
-                    set: { if !$0 { selectedNote = nil } }
-                )) {
-                    if let note = selectedNote,
-                       let index = store.notes.firstIndex(where: { $0.id == note.id }) {
-                        let binding = $store.notes[index]
-                        NoteDetailView(note: binding, store: store)
-                    }
-                }
-                .background(Color(.systemGray6).ignoresSafeArea())
-
-                Button(action: {
-                    withAnimation(.spring()) {
-                        showingAddNote = true
-                    }
-                }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.blue)
-                        .clipShape(Circle())
-                        .shadow(radius: 4)
-                }
-                .padding()
-            }
+    @ViewBuilder
+    func sectionHeader(_ title: String) -> some View {
+        HStack {
+            Text(title)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            Spacer()
         }
+        .padding(.horizontal)
     }
 
     @ViewBuilder
@@ -154,46 +70,50 @@ struct ContentView: View {
                         Text(note.title)
                             .font(.headline)
                             .foregroundColor(.primary)
+                        Spacer()
                         if note.isPinned {
-                            Text("📌")
+                            Image(systemName: "pin.fill")
+                                .foregroundColor(.blue)
                         }
                     }
-                    Text(note.date, style: .date)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+
                     Text(note.content)
-                        .lineLimit(1)
+                        .lineLimit(2)
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
+
+                    HStack {
+                        Image(systemName: "calendar")
+                        Text(note.date.formatted(date: .abbreviated, time: .omitted))
+                    }
+                    .font(.caption)
+                    .foregroundColor(.gray)
                 }
-                .padding(8)
-                .background(Color.white)
-                
+                .padding()
+                .background(Color(.systemBackground))
+                .cornerRadius(14)
+                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
             }
             .buttonStyle(.plain)
-            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                Button {
+            .contextMenu {
+                Button(note.isPinned ? "Unpin" : "Pin") {
                     if let index = store.notes.firstIndex(where: { $0.id == note.id }) {
                         withAnimation {
                             store.notes[index].isPinned.toggle()
                             store.saveNotes()
                         }
                     }
-                } label: {
-                    Label(note.isPinned ? "Unpin" : "Pin", systemImage: note.isPinned ? "pin.slash" : "pin")
                 }
-                .tint(note.isPinned ? .gray : .blue)
-
-                Button(role: .destructive) {
+                
+                Button("Delete") {
                     if let index = store.notes.firstIndex(where: { $0.id == note.id }) {
                         withAnimation {
                             store.notes.remove(at: index)
                             store.saveNotes()
                         }
                     }
-                } label: {
-                    Label("Delete", systemImage: "trash")
                 }
+                .foregroundColor(.red)
             }
         }
     }

@@ -8,9 +8,9 @@ struct iOSCheckboxToggleStyle: ToggleStyle {
             }
         }) {
             HStack {
-                Image(systemName: configuration.isOn ? "checkmark.square.fill" : "square")
+                Image(systemName: configuration.isOn ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(configuration.isOn ? .blue : .gray)
-                    .font(.system(size: 20))
+                    .font(.title3)
                 configuration.label
             }
         }
@@ -33,35 +33,46 @@ struct AddNoteView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 24) {
+
+                    // Title
                     TextField("Title", text: $title)
-                        .font(.title)
+                        .font(.system(.title, design: .rounded))
                         .padding()
                         .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
+                        .cornerRadius(12)
 
+                    // Content
                     TextEditor(text: $content)
-                        .frame(height: 120)
+                        .frame(height: 160)
+                        .font(.system(.body, design: .rounded))
                         .padding()
                         .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
+                        .cornerRadius(12)
 
-                    VStack(alignment: .leading, spacing: 10) {
+                    // Checklist
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("Checklist")
                             .font(.headline)
 
                         ForEach($checklistItems) { $item in
-                            Toggle(isOn: $item.isChecked) {
-                                Text(item.text)
-                                    .strikethrough(item.isChecked, color: .gray)
-                                    .foregroundColor(item.isChecked ? .gray : .primary)
+                            HStack(spacing: 12) {
+                                Toggle(isOn: $item.isChecked) {
+                                    TextField("Checklist item", text: $item.text)
+                                        .font(.system(.body, design: .rounded))
+                                }
+                                .toggleStyle(iOSCheckboxToggleStyle())
                             }
-                            .toggleStyle(iOSCheckboxToggleStyle())
+                            .padding(.vertical, 8)
+                            .padding(.horizontal)
+                            .background(Color(.tertiarySystemGroupedBackground))
+                            .cornerRadius(10)
                         }
 
                         HStack {
                             TextField("Add checklist item", text: $newChecklistItem)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .font(.system(.body, design: .rounded))
 
                             Button(action: {
                                 if !newChecklistItem.isEmpty {
@@ -78,15 +89,18 @@ struct AddNoteView: View {
                         .padding(.top, 4)
                     }
 
-                    VStack(alignment: .leading, spacing: 10) {
+                    // Folder
+                    VStack(alignment: .leading, spacing: 8) {
                         Text("Folder")
                             .font(.headline)
                         TextField("Folder name", text: $folder)
                             .padding()
                             .background(Color(.secondarySystemBackground))
                             .cornerRadius(10)
+                            .font(.system(.body, design: .rounded))
                     }
 
+                    // Image
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Image")
                             .font(.headline)
@@ -118,21 +132,22 @@ struct AddNoteView: View {
                             title: title,
                             content: content,
                             date: Date(),
+                            tags: [folder],
                             isPinned: false,
                             folder: folder,
                             checklist: checklistItems,
                             imageData: image?.pngData()
                         )
-                        store.notes.append(newNote)
-                        store.saveNotes()
+                        store.add(note: newNote)
                         dismiss()
                     }
                     .disabled(title.isEmpty && content.isEmpty)
                 }
             }
-            .sheet(isPresented: $showingImagePicker) {
+            .sheet(isPresented: $showingImagePicker, content: {
                 ImagePicker(selectedImage: $image)
-            }
+            })
+            .background(Color(.systemBackground))
         }
     }
 }
