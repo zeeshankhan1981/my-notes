@@ -5,41 +5,29 @@ struct NoteDetailView: View {
     @ObservedObject var store: NotesStore
 
     @State private var isEditing = false
-    @FocusState private var focusedChecklistIndex: Int?
     @State private var showTagOptions = false
-    
-    // Animation constants
+    @State private var inputImage: UIImage? = nil
+    @State private var showImagePicker = false
+    @FocusState private var focusedChecklistIndex: Int?
+
     private let transitionAnimation = Animation.easeInOut(duration: 0.3)
+    private let accentColor = Color.blue
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                // Title area
+            VStack(alignment: .leading, spacing: 24) {
                 titleSection
-                
-                // Content area with proper spacing
                 contentSection
-                
-                // Checklist section
-                if !note.checklist.isEmpty {
-                    checklistSection
-                }
-
-                // Image section (if available)
-                if let imageData = note.imageData, let image = UIImage(data: imageData) {
-                    imageSection(image: image)
-                }
-                
-                // Metadata section - tags and folder
-                metadataSection
+                checklistSection
+                imageSection
+                folderSection
+                tagSection
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 32)
-            .background(Color(red: 0.98, green: 0.98, blue: 0.98))
+            .padding()
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .background(Color(red: 0.98, green: 0.98, blue: 0.98).ignoresSafeArea())
+        .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button(isEditing ? "Done" : "Edit") {
@@ -50,9 +38,8 @@ struct NoteDetailView: View {
                         }
                     }
                 }
-                .foregroundColor(Color(red: 0.0, green: 0.52, blue: 0.93))
+                .foregroundColor(accentColor)
             }
-            
             ToolbarItem(placement: .navigationBarTrailing) {
                 if !isEditing {
                     Menu {
@@ -62,7 +49,7 @@ struct NoteDetailView: View {
                         }) {
                             Label(note.isPinned ? "Unpin" : "Pin", systemImage: note.isPinned ? "pin.slash" : "pin")
                         }
-                        
+
                         Button(action: {
                             showTagOptions.toggle()
                         }) {
@@ -70,326 +57,135 @@ struct NoteDetailView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
-                            .foregroundColor(Color(red: 0.0, green: 0.52, blue: 0.93))
+                            .foregroundColor(accentColor)
                     }
                 }
             }
         }
         .sheet(isPresented: $showTagOptions) {
-            // Tag management sheet would go here
             Text("Tag Management")
                 .presentationDetents([.medium])
         }
-    }
-    
-    // MARK: - View Components
-    
-    private var titleSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if isEditing {
-                TextField("Title", text: $note.title)
-                    .font(.system(size: 28, weight: .semibold))
-                    .foregroundColor(Color(red: 0.13, green: 0.13, blue: 0.13))
-                    .padding(.top, 24)
-                    .padding(.bottom, 16)
-            } else {
-                Text(note.title)
-                    .font(.system(size: 28, weight: .semibold))
-                    .foregroundColor(Color(red: 0.13, green: 0.13, blue: 0.13))
-                    .padding(.top, 24)
-                    .padding(.bottom, 16)
+        .sheet(isPresented: $showImagePicker) {
+            ImagePicker(image: $inputImage)
+        }
+        .onChange(of: inputImage) { newImage in
+            if let newImage = newImage {
+                note.imageData = newImage.jpegData(compressionQuality: 0.8)
+                store.saveNotes()
             }
-            
-            // Date and metadata line
-            HStack {
-                Text(formattedDate(note.date))
-                    .font(.system(size: 11, weight: .regular))
-                    .foregroundColor(Color(red: 0.45, green: 0.45, blue: 0.45))
-                
-                if note.isPinned {
-                    Image(systemName: "pin.fill")
-                        .font(.caption2)
-                        .foregroundColor(Color(red: 0.0, green: 0.52, blue: 0.93))
-                        .padding(.leading, 4)
-                }
-            }
-            .padding(.bottom, 16)
-            
-            Divider()
-                .background(Color(red: 0.85, green: 0.85, blue: 0.85))
-                .padding(.bottom, 24)
         }
     }
-    
+
+    private var titleSection: some View {
+        TextField("Title", text: $note.title)
+            .font(.largeTitle)
+            .bold()
+            .disabled(!isEditing)
+    }
+
     private var contentSection: some View {
         Group {
             if isEditing {
                 TextEditor(text: $note.content)
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundColor(Color(red: 0.13, green: 0.13, blue: 0.13))
-                    .frame(minHeight: 200)
+                    .frame(minHeight: 120)
                     .padding(8)
-                    .background(Color(red: 0.96, green: 0.96, blue: 0.97))
-                    .cornerRadius(8)
-                    .shadow(
-                        color: Color.black.opacity(0.1),
-                        radius: 2,
-                        x: 0,
-                        y: 1
-                    )
-                    .padding(.bottom, 24)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(10)
             } else {
                 Text(note.content)
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundColor(Color(red: 0.13, green: 0.13, blue: 0.13))
-                    .lineSpacing(4)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.bottom, 24)
+                    .font(.body)
+                    .foregroundColor(.primary)
             }
         }
     }
-    
-    private var checklistSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Checklist")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(Color(red: 0.13, green: 0.13, blue: 0.13))
-                .padding(.bottom, 4)
 
-            ForEach(Array(note.checklist.indices), id: \.self) { index in
-                HStack(spacing: 16) {
-                    Button {
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            note.checklist[index].isChecked.toggle()
-                            store.saveNotes()
+    private var checklistSection: some View {
+        Group {
+            if !note.checklist.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Checklist")
+                        .font(.headline)
+
+                    ForEach($note.checklist.indices, id: \ .self) { index in
+                        Toggle(isOn: $note.checklist[index].isChecked) {
+                            if isEditing {
+                                TextField("Item", text: $note.checklist[index].text)
+                                    .focused($focusedChecklistIndex, equals: index)
+                            } else {
+                                Text(note.checklist[index].text)
+                                    .strikethrough(note.checklist[index].isChecked)
+                                    .foregroundColor(note.checklist[index].isChecked ? .gray : .primary)
+                            }
                         }
-                    } label: {
-                        Image(systemName: note.checklist[index].isChecked ? "checkmark.circle.fill" : "circle")
-                            .foregroundColor(note.checklist[index].isChecked ? Color(red: 0.0, green: 0.52, blue: 0.93) : Color(red: 0.45, green: 0.45, blue: 0.45))
-                            .font(.system(size: 18))
+                        .toggleStyle(NoteCheckboxStyle())
                     }
+                }
+            }
+        }
+    }
+
+    private var imageSection: some View {
+        Group {
+            if let imageData = note.imageData, let image = UIImage(data: imageData) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Image")
+                        .font(.headline)
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .cornerRadius(10)
 
                     if isEditing {
-                        TextField("", text: $note.checklist[index].text)
-                            .focused($focusedChecklistIndex, equals: index)
-                            .font(.system(size: 16, weight: .regular))
-                            .strikethrough(note.checklist[index].isChecked, color: Color(red: 0.45, green: 0.45, blue: 0.45))
-                            .foregroundColor(note.checklist[index].isChecked ? Color(red: 0.45, green: 0.45, blue: 0.45) : Color(red: 0.13, green: 0.13, blue: 0.13))
-                            .onSubmit {
-                                if !note.checklist[index].text.trimmingCharacters(in: .whitespaces).isEmpty {
-                                    withAnimation(.easeInOut(duration: 0.3)) {
-                                        note.checklist.insert(ChecklistItem(text: "", isChecked: false), at: index + 1)
-                                        focusedChecklistIndex = index + 1
-                                    }
-                                }
-                            }
-                    } else {
-                        Text(note.checklist[index].text)
-                            .font(.system(size: 16, weight: .regular))
-                            .strikethrough(note.checklist[index].isChecked, color: Color(red: 0.45, green: 0.45, blue: 0.45))
-                            .foregroundColor(note.checklist[index].isChecked ? Color(red: 0.45, green: 0.45, blue: 0.45) : Color(red: 0.13, green: 0.13, blue: 0.13))
+                        Button("Change Image") {
+                            showImagePicker = true
+                        }
                     }
                 }
-                .padding(.vertical, 4)
-                .animation(.easeOut(duration: 0.2), value: note.checklist[index].isChecked)
+            } else if isEditing {
+                Button("Add Image") {
+                    showImagePicker = true
+                }
             }
+        }
+    }
 
+    private var folderSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Folder")
+                .font(.headline)
             if isEditing {
-                Button {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        note.checklist.append(ChecklistItem(text: "", isChecked: false))
-                        focusedChecklistIndex = note.checklist.count - 1
-                    }
-                } label: {
-                    HStack {
-                        Image(systemName: "plus.circle.fill")
-                            .foregroundColor(Color(red: 0.0, green: 0.52, blue: 0.93))
-                        Text("Add Item")
-                            .foregroundColor(Color(red: 0.0, green: 0.52, blue: 0.93))
-                    }
-                    .font(.system(size: 13, weight: .regular))
-                    .padding(.vertical, 4)
-                }
-            }
-            
-            Divider()
-                .background(Color(red: 0.85, green: 0.85, blue: 0.85))
-                .padding(.vertical, 16)
-        }
-    }
-    
-    private func imageSection(image: UIImage) -> some View {
-        VStack {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFit()
-                .cornerRadius(12)
-                .shadow(
-                    color: Color.black.opacity(0.1),
-                    radius: 4,
-                    x: 0,
-                    y: 2
-                )
-                .padding(.vertical, 16)
-            
-            Divider()
-                .background(Color(red: 0.85, green: 0.85, blue: 0.85))
-                .padding(.bottom, 16)
-        }
-    }
-    
-    private var metadataSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Folder section
-            folderView
-            
-            // Tags section (if there are tags)
-            if !note.tags.isEmpty {
-                tagListView
-            }
-        }
-        .padding(.top, 32)
-    }
-    
-    private var folderView: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            if isEditing {
-                Text("Folder")
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundColor(Color(red: 0.45, green: 0.45, blue: 0.45))
-                
-                TextField("Enter folder", text: $note.folder)
-                    .font(.system(size: 16, weight: .regular))
-                    .padding(4)
-                    .background(Color(red: 0.96, green: 0.96, blue: 0.97))
-                    .cornerRadius(4)
+                TextField("Folder", text: $note.folder)
+                    .textFieldStyle(.roundedBorder)
             } else {
-                HStack(spacing: 4) {
-                    Image(systemName: "folder")
-                        .foregroundColor(Color(red: 0.0, green: 0.52, blue: 0.93))
-                    
-                    Text(note.folder)
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(Color(red: 0.0, green: 0.52, blue: 0.93))
-                }
-                .padding(.vertical, 4)
-                .padding(.horizontal, 8)
-                .background(Color(red: 0.0, green: 0.52, blue: 0.93).opacity(0.1))
-                .cornerRadius(4)
+                Label(note.folder, systemImage: "folder")
+                    .foregroundColor(.blue)
             }
         }
-        .padding(.bottom, 8)
     }
-    
-    private var tagListView: some View {
+
+    private var tagSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Tags")
-                .font(.system(size: 13, weight: .regular))
-                .foregroundColor(Color(red: 0.45, green: 0.45, blue: 0.45))
-            
-            FlowLayout(spacing: 6) {
-                ForEach(note.tags, id: \.self) { tag in
-                    tagView(tag: tag)
-                }
+                .font(.headline)
+            if note.tags.isEmpty {
+                Text("None")
+                    .foregroundColor(.secondary)
+            } else {
+                Text(note.tags.joined(separator: ", "))
             }
         }
-    }
-    
-    private func tagView(tag: String) -> some View {
-        HStack(spacing: 2) {
-            Circle()
-                .fill(tagColor(for: tag))
-                .frame(width: 8, height: 8)
-            
-            Text(tag)
-                .font(.system(size: 13, weight: .regular))
-                .foregroundColor(Color(red: 0.13, green: 0.13, blue: 0.13))
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Color(red: 0.96, green: 0.96, blue: 0.97))
-        .cornerRadius(8)
-    }
-    
-    // MARK: - Helper Methods
-    
-    private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        return formatter.string(from: date)
-    }
-    
-    private func tagColor(for tag: String) -> Color {
-        let colors: [Color] = [
-            Color(red: 0.0, green: 0.52, blue: 0.93),     // Power Blue
-            Color(red: 0.2, green: 0.6, blue: 0.86),      // Light Blue
-            Color(red: 0.4, green: 0.68, blue: 0.8),      // Sky Blue
-            Color(red: 0.0, green: 0.7, blue: 0.7),       // Teal
-            Color(red: 0.0, green: 0.6, blue: 0.5),       // Green-Blue
-            Color(red: 0.3, green: 0.5, blue: 0.8),       // Indigo
-            Color(red: 0.5, green: 0.4, blue: 0.9)        // Purple
-        ]
-        let index = abs(tag.hashValue) % colors.count
-        return colors[index]
     }
 }
 
-// MARK: - Flow Layout for Tags
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 8
-    
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) -> CGSize {
-        let containerWidth = proposal.width ?? .infinity
-        
-        var totalHeight: CGFloat = 0
-        var lineWidth: CGFloat = 0
-        var lineHeight: CGFloat = 0
-        
-        for view in subviews {
-            let viewSize = view.sizeThatFits(.unspecified)
-            
-            if lineWidth + viewSize.width > containerWidth {
-                // Start a new line
-                totalHeight += lineHeight + spacing
-                lineWidth = viewSize.width
-                lineHeight = viewSize.height
-            } else {
-                // Continue on current line
-                lineWidth += viewSize.width + spacing
-                lineHeight = max(lineHeight, viewSize.height)
+struct NoteCheckboxStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Button(action: { configuration.isOn.toggle() }) {
+            HStack {
+                Image(systemName: configuration.isOn ? "checkmark.circle.fill" : "circle")
+                configuration.label
             }
         }
-        
-        // Add the final line height
-        totalHeight += lineHeight
-        
-        return CGSize(width: containerWidth, height: totalHeight)
+        .buttonStyle(.plain)
     }
-    
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) {
-        let containerWidth = bounds.width
-        
-        var lineX = bounds.minX
-        var lineY = bounds.minY
-        var lineHeight: CGFloat = 0
-        
-        for view in subviews {
-            let viewSize = view.sizeThatFits(.unspecified)
-            
-            if lineX + viewSize.width > containerWidth + bounds.minX {
-                // Start a new line
-                lineX = bounds.minX
-                lineY += lineHeight + spacing
-                lineHeight = 0
-            }
-            
-            // Place the view
-            view.place(at: CGPoint(x: lineX, y: lineY), proposal: .unspecified)
-            
-            // Update position and line height
-            lineX += viewSize.width + spacing
-            lineHeight = max(lineHeight, viewSize.height)
-        }
-    }
-}
+} 

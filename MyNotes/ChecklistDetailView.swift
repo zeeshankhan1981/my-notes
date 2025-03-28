@@ -7,24 +7,20 @@ struct ChecklistDetailView: View {
     @State private var isEditing = false
     @FocusState private var focusedIndex: Int?
 
-    private let transition = Animation.easeInOut(duration: 0.3)
-    private let accentColor = Color.blue
-
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                // Title
+            VStack(alignment: .leading, spacing: 20) {
                 TextField("Title", text: $checklist.title)
                     .font(.largeTitle)
                     .bold()
                     .disabled(!isEditing)
 
-                // Checklist
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Checklist")
-                        .font(.headline)
+                Text("Date: \(checklist.date.formatted(date: .abbreviated, time: .omitted))")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
 
-                    ForEach($checklist.items.indices, id: \ .self) { index in
+                if isEditing {
+                    ForEach($checklist.items.indices, id: \.self) { index in
                         HStack {
                             Toggle(isOn: $checklist.items[index].isChecked) {
                                 TextField("Item", text: $checklist.items[index].text)
@@ -32,45 +28,53 @@ struct ChecklistDetailView: View {
                             }
                             .toggleStyle(ChecklistCheckboxStyle())
                         }
-                        .disabled(!isEditing)
+                    }
+
+                    Button(action: {
+                        checklist.items.append(ChecklistItem(text: "", isChecked: false))
+                        focusedIndex = checklist.items.count - 1
+                    }) {
+                        Label("Add Item", systemImage: "plus.circle")
+                            .foregroundColor(.blue)
+                    }
+                } else {
+                    ForEach($checklist.items) { $item in
+                        Toggle(isOn: $item.isChecked) {
+                            Text(item.text)
+                                .strikethrough(item.isChecked)
+                                .foregroundColor(item.isChecked ? .gray : .primary)
+                        }
+                        .toggleStyle(ChecklistCheckboxStyle())
                     }
                 }
 
-                // Folder
+                Divider()
+
                 VStack(alignment: .leading) {
                     Text("Folder")
                         .font(.headline)
-                    TextField("Folder", text: $checklist.folder)
-                        .textFieldStyle(.roundedBorder)
-                        .disabled(!isEditing)
-                }
-
-                // Tags
-                VStack(alignment: .leading) {
-                    Text("Tags")
-                        .font(.headline)
-                    Text(checklist.tags.joined(separator: ", "))
-                        .foregroundColor(.secondary)
+                    if isEditing {
+                        TextField("Folder", text: $checklist.folder)
+                            .textFieldStyle(.roundedBorder)
+                    } else {
+                        Text(checklist.folder)
+                    }
                 }
             }
             .padding()
         }
-        .navigationTitle("Checklist")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button(isEditing ? "Done" : "Edit") {
-                    withAnimation(transition) {
+                    withAnimation {
                         isEditing.toggle()
-                        if !isEditing {
-                            store.save()
-                        }
+                        store.saveChecklists()
                     }
                 }
-                .foregroundColor(accentColor)
             }
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
     }
 }
 
