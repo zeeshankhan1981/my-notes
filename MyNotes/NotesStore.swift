@@ -1,10 +1,3 @@
-//
-//  NotesStore.swift
-//  MyNotes
-//
-//  Created by Zeeshan Khan on 3/25/25.
-//
-
 import Foundation
 
 class NotesStore: ObservableObject {
@@ -41,5 +34,15 @@ class NotesStore: ObservableObject {
     func delete(at offsets: IndexSet) {
         notes.remove(atOffsets: offsets)
         saveNotes()
+    }
+
+    var allFolders: [String] {
+        let folders = Set(notes.map { $0.folder })
+        return ["All"] + folders.sorted()
+    }
+
+    var allTags: [String] {
+        let tags = notes.flatMap { $0.tags }
+        return Array(Set(tags)).sorted()
     }
 }

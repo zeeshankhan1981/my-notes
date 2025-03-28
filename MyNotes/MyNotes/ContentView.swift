@@ -7,12 +7,14 @@ struct ContentView: View {
     @State private var searchText = ""
     @State private var selectedNote: Note?
     @State private var selectedFolder: String = "All"
+    @State private var selectedTag: String? = nil
+    @State private var sortByNewest = true
 
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
                 VStack(spacing: 16) {
-                    folderFilterMenu
+                    filterMenuBar
                     noteListSection
                 }
                 .navigationTitle("My Notes")
@@ -37,11 +39,19 @@ struct ContentView: View {
                 }
                 .background(Color(.systemGray6).ignoresSafeArea())
 
-                Button(action: {
-                    withAnimation(.spring()) {
+                Menu {
+                    Button {
                         showingAddNote = true
+                    } label: {
+                        Label("New Note", systemImage: "square.and.pencil")
                     }
-                }) {
+
+                    Button {
+                        showingAddNote = true // placeholder for checklist creator
+                    } label: {
+                        Label("Checklist", systemImage: "checklist")
+                    }
+                } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
@@ -56,33 +66,70 @@ struct ContentView: View {
     }
 
     var filteredNotes: [Note] {
-        let notesInFolder = selectedFolder == "All" ? store.notes : store.notes.filter { $0.folder == selectedFolder }
-        let sortedNotes = notesInFolder.sorted {
-            if $0.isPinned != $1.isPinned {
-                return $0.isPinned && !$1.isPinned
-            } else {
-                return $0.date > $1.date
-            }
+        var result = store.notes
+
+        if selectedFolder != "All" {
+            result = result.filter { $0.folder == selectedFolder }
         }
-        if searchText.isEmpty {
-            return sortedNotes
-        } else {
-            return sortedNotes.filter {
+
+        if let tag = selectedTag {
+            result = result.filter { $0.tags.contains(tag) }
+        }
+
+        if !searchText.isEmpty {
+            result = result.filter {
                 $0.title.localizedCaseInsensitiveContains(searchText) ||
                 $0.content.localizedCaseInsensitiveContains(searchText)
             }
         }
+
+        result = result.sorted(by: {
+            sortByNewest ? $0.date > $1.date : $0.date < $1.date
+        })
+
+        return result
     }
 
     var pinnedNotes: [Note] { filteredNotes.filter { $0.isPinned } }
     var unpinnedNotes: [Note] { filteredNotes.filter { !$0.isPinned } }
 
-    private var folderFilterMenu: some View {
+    private var filterMenuBar: some View {
         HStack {
             Text("Filter by:")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-            
+
+            Menu {
+                Section("Folders") {
+                    ForEach(store.allFolders, id: \.self) { folder in
+                        Button {
+                            selectedFolder = folder
+                        } label: {
+                            HStack {
+                                Text(folder)
+                                if selectedFolder == folder {
+                                    Spacer()
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Text(selectedFolder)
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                    Image(systemName: "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color(.systemGray5))
+                .clipShape(Capsule())
+            }
+
             Spacer()
         }
         .padding(.horizontal)
