@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D0C59B5F2D95E67C008C1125 /* FolderManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0C59B5E2D95E67C008C1125 /* FolderManagerView.swift */; };
 		D0DD292F2D93A2B60064847B /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0DD292E2D93A2B60064847B /* Note.swift */; };
 		D0DD29312D93A2E70064847B /* NotesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0DD29302D93A2E70064847B /* NotesStore.swift */; };
 		D0DD29332D93A3590064847B /* AddNoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0DD29322D93A3590064847B /* AddNoteView.swift */; };
@@ -16,6 +17,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D0C59B5E2D95E67C008C1125 /* FolderManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderManagerView.swift; sourceTree = "<group>"; };
 		D0DD291D2D93A2670064847B /* MyNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0DD292E2D93A2B60064847B /* Note.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Note.swift; sourceTree = "<group>"; };
 		D0DD29302D93A2E70064847B /* NotesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesStore.swift; sourceTree = "<group>"; };
@@ -47,6 +49,7 @@
 		D0DD29142D93A2670064847B = {
 			isa = PBXGroup;
 			children = (
+				D0C59B5E2D95E67C008C1125 /* FolderManagerView.swift */,
 				D0DD293A2D9440980064847B /* ChecklistItem.swift */,
 				D0DD29362D943D1E0064847B /* ImagePicker.swift */,
 				D0DD29342D93A8640064847B /* NoteDetailView.swift */,
@@ -144,6 +147,7 @@
 				D0DD29372D943D1E0064847B /* ImagePicker.swift in Sources */,
 				D0DD29352D93A8640064847B /* NoteDetailView.swift in Sources */,
 				D0DD292F2D93A2B60064847B /* Note.swift in Sources */,
+				D0C59B5F2D95E67C008C1125 /* FolderManagerView.swift in Sources */,
 				D0DD29332D93A3590064847B /* AddNoteView.swift in Sources */,
 				D0DD293B2D9440980064847B /* ChecklistItem.swift in Sources */,
 			);
