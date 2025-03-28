@@ -10,6 +10,7 @@
 		D038FA1F2D96E12000183994 /* AddChecklistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D038FA1E2D96E12000183994 /* AddChecklistView.swift */; };
 		D038FA212D96E62400183994 /* ChecklistNote.swift in Sources */ = {isa = PBXBuildFile; fileRef = D038FA202D96E62400183994 /* ChecklistNote.swift */; };
 		D038FA232D96E90E00183994 /* ChecklistStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D038FA222D96E90E00183994 /* ChecklistStore.swift */; };
+		D038FA252D96EBDD00183994 /* ChecklistDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D038FA242D96EBDD00183994 /* ChecklistDetailView.swift */; };
 		D0C59B5F2D95E67C008C1125 /* FolderManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0C59B5E2D95E67C008C1125 /* FolderManagerView.swift */; };
 		D0DD292F2D93A2B60064847B /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0DD292E2D93A2B60064847B /* Note.swift */; };
 		D0DD29312D93A2E70064847B /* NotesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0DD29302D93A2E70064847B /* NotesStore.swift */; };
@@ -23,6 +24,7 @@
 		D038FA1E2D96E12000183994 /* AddChecklistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddChecklistView.swift; sourceTree = "<group>"; };
 		D038FA202D96E62400183994 /* ChecklistNote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChecklistNote.swift; sourceTree = "<group>"; };
 		D038FA222D96E90E00183994 /* ChecklistStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChecklistStore.swift; sourceTree = "<group>"; };
+		D038FA242D96EBDD00183994 /* ChecklistDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChecklistDetailView.swift; sourceTree = "<group>"; };
 		D0C59B5E2D95E67C008C1125 /* FolderManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderManagerView.swift; sourceTree = "<group>"; };
 		D0DD291D2D93A2670064847B /* MyNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0DD292E2D93A2B60064847B /* Note.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Note.swift; sourceTree = "<group>"; };
@@ -55,6 +57,7 @@
 		D0DD29142D93A2670064847B = {
 			isa = PBXGroup;
 			children = (
+				D038FA242D96EBDD00183994 /* ChecklistDetailView.swift */,
 				D038FA222D96E90E00183994 /* ChecklistStore.swift */,
 				D038FA202D96E62400183994 /* ChecklistNote.swift */,
 				D038FA1E2D96E12000183994 /* AddChecklistView.swift */,
@@ -152,6 +155,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D038FA252D96EBDD00183994 /* ChecklistDetailView.swift in Sources */,
 				D0DD29312D93A2E70064847B /* NotesStore.swift in Sources */,
 				D038FA212D96E62400183994 /* ChecklistNote.swift in Sources */,
 				D0DD29372D943D1E0064847B /* ImagePicker.swift in Sources */,
