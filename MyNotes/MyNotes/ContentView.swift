@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject var store = NotesStore()
     @State private var showingAddNote = false
+    @State private var showingAddChecklist = false
     @State private var showingFolderManager = false
     @State private var searchText = ""
     @State private var selectedNote: Note?
@@ -22,6 +23,11 @@ struct ContentView: View {
                 .toolbar { toolbarMenu }
                 .sheet(isPresented: $showingAddNote) {
                     AddNoteView(store: store)
+                }
+                .sheet(isPresented: $showingAddChecklist) {
+                    AddChecklistView { newChecklist in
+                        print("✅ New checklist created: \(newChecklist.title)")
+                    }
                 }
                 .sheet(isPresented: $showingFolderManager) {
                     FolderManagerView(store: store)
@@ -47,7 +53,7 @@ struct ContentView: View {
                     }
 
                     Button {
-                        showingAddNote = true // placeholder for checklist creator
+                        showingAddChecklist = true
                     } label: {
                         Label("Checklist", systemImage: "checklist")
                     }
@@ -101,7 +107,7 @@ struct ContentView: View {
 
             Menu {
                 Section("Folders") {
-                    ForEach(store.allFolders, id: \.self) { folder in
+                    ForEach(store.allFolders, id: \ .self) { folder in
                         Button {
                             selectedFolder = folder
                         } label: {
